@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app/core/local_api/task_local_api.dart';
 import 'package:todo_app/screens/add_task_screen.dart';
 import 'package:todo_app/widgets/task_card_widget.dart';
 
@@ -12,14 +13,24 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  List<TaskEntity> listOfTasks = [
-    TaskEntity(
-      title: "test",
-      date: DateTime.now(),
-      description: "test",
-      status: TaskStatus.todo,
-    ),
-  ];
+  List<TaskEntity> listOfTasks = [];
+
+  @override
+  void initState() {
+    initialization();
+    super.initState();
+  }
+
+  initialization() async {
+    final listData = await TaskLocalApi.getAll();
+    listOfTasks = listData;
+
+
+    setState(() {
+
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,15 +76,16 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  _onCreateTask(String title, String description) {
+  _onCreateTask(String title, String description) async {
     final TaskEntity entity = TaskEntity(
         status: TaskStatus.todo,
         title: title,
         date: DateTime.now(),
         description: description);
-    listOfTasks.add(entity);
-    setState(() {
-
-    });
+    final result = await TaskLocalApi.save(entity);
+    if (result) {
+      listOfTasks.add(entity);
+      setState(() {});
+    }
   }
 }

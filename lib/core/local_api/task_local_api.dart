@@ -13,6 +13,16 @@ class TaskLocalApi {
     }
   }
 
+  static Future<bool> delete(int index) async {
+    try {
+      final box = await Hive.openBox(HiveBoxConstants.tasksBox);
+      box.deleteAt(index);
+      return Future.value(true);
+    } catch (error) {
+      return Future.value(false);
+    }
+  }
+
   static Future<List<TaskEntity>> getAll() async {
     try {
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);

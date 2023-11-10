@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'package:todo_app/core/local_api/task_local_api.dart';
+import 'package:todo_app/core/utils/dialogs_helper.dart';
 import 'package:todo_app/screens/add_task_screen.dart';
 import 'package:todo_app/widgets/task_card_widget.dart';
 
@@ -13,6 +15,8 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
+  final TextEditingController _textEditingController = TextEditingController();
+
   List<TaskEntity> listOfTasks = [];
 
   @override
@@ -25,55 +29,102 @@ class _TodoScreenState extends State<TodoScreen> {
     final listData = await TaskLocalApi.getAll();
     listOfTasks = listData;
 
-
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Tasks"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: listOfTasks.length,
-                itemBuilder: (context, index) {
-                  final element = listOfTasks[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 15),
-                    child: TaskCardWidget(entity: element),
-                  );
-                },
-              ),
-            )
-          ],
+    return KeyboardDismisser(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Tasks"),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepPurple,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddTaskScreen(
-                onCreate: _onCreateTask,
+        body: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: Column(
+            children: [
+              TextField(
+                  controller: _textEditingController,
+                  onSubmitted: (String text) {
+                    _onSearch(text);
+                  },
+                  decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        _textEditingController.clear();
+                        _onRefreshTask();
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+                    labelText: "Search",
+                  )),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: listOfTasks.length,
+                  itemBuilder: (context, index) {
+                    final localIndex = index;
+                    final element = listOfTasks[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                      child: GestureDetector(
+                          onTap: () async {
+                            _onDeleteTask(localIndex);
+                          },
+                          child: TaskCardWidget(entity: element)),
+                    );
+                  },
+                ),
+              )
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: Colors.deepPurple,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddTaskScreen(
+                  onCreate: _onCreateTask,
+                ),
               ),
-            ),
-          );
-        },
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
+            );
+          },
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+          ),
         ),
       ),
     );
+  }
+
+  _onDeleteTask(int index) async {
+    final result = await DialogsHelper.deleteTask(context);
+    if (result!) {
+      TaskLocalApi.delete(index);
+      _onRefreshTask();
+      setState(() {});
+    }
+  }
+
+  _onRefreshTask() async {
+    listOfTasks.clear();
+    listOfTasks = await TaskLocalApi.getAll();
+    setState(() {});
+  }
+
+  _onSearch(String text) {
+    List<TaskEntity> filterList = [];
+    for (var element in listOfTasks) {
+      if (element.title == text) {
+        filterList.add(element);
+      }
+    }
+    listOfTasks.clear();
+    listOfTasks = filterList;
+    setState(() {});
   }
 
   _onCreateTask(String title, String description) async {

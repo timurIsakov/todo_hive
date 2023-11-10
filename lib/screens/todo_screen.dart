@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:todo_app/widgets/todo_widget.dart';
+import 'package:todo_app/screens/add_task_screen.dart';
+import 'package:todo_app/widgets/task_card_widget.dart';
 
-import '../core/entity/todo_entity.dart';
+import '../core/entity/task_entity.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({Key? key}) : super(key: key);
@@ -11,10 +12,13 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  List<TodoEntity> listOfTasks = [
-    TodoEntity(
-        title: "test", date: DateTime.now(), description: "testtesttest"),
-
+  List<TaskEntity> listOfTasks = [
+    TaskEntity(
+      title: "test",
+      date: DateTime.now(),
+      description: "test",
+      status: TaskStatus.todo,
+    ),
   ];
   @override
   Widget build(BuildContext context) {
@@ -22,7 +26,7 @@ class _TodoScreenState extends State<TodoScreen> {
       appBar: AppBar(
         title: const Text("Tasks"),
       ),
-      body:  Padding(
+      body: Padding(
         padding: const EdgeInsets.only(left: 16, right: 16),
         child: Column(
           children: [
@@ -33,7 +37,7 @@ class _TodoScreenState extends State<TodoScreen> {
                   final element = listOfTasks[index];
                   return Padding(
                     padding: const EdgeInsets.only(top: 15),
-                    child: TodoWidget(entity: element),
+                    child: TaskCardWidget(entity: element),
                   );
                 },
               ),
@@ -43,14 +47,33 @@ class _TodoScreenState extends State<TodoScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.deepPurple,
-        onPressed: () {},
-        child: const Center(
-          child: Icon(
-            Icons.add,
-            color: Colors.white,
-          ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddTaskScreen(
+                onCreate: _onCreateTask,
+              ),
+            ),
+          );
+        },
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
         ),
       ),
     );
+  }
+
+  _onCreateTask(String title, String description) {
+    final TaskEntity entity = TaskEntity(
+        status: TaskStatus.todo,
+        title: title,
+        date: DateTime.now(),
+        description: description);
+    listOfTasks.add(entity);
+    setState(() {
+
+    });
   }
 }

@@ -7,14 +7,14 @@ import 'package:todo_app/widgets/task_card_widget.dart';
 
 import '../core/entity/task_entity.dart';
 
-class TodoScreen extends StatefulWidget {
-  const TodoScreen({Key? key}) : super(key: key);
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<TodoScreen> createState() => _TodoScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _TodoScreenState extends State<TodoScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _textEditingController = TextEditingController();
 
   List<TaskEntity> listOfTasks = [];
@@ -32,12 +32,74 @@ class _TodoScreenState extends State<TodoScreen> {
     setState(() {});
   }
 
+  _onDeleteTask(TaskEntity entity) async {
+    final result = await DialogsHelper.deleteTask(context);
+    if (result!) {
+      await TaskLocalApi.deleteTask(entity);
+      _onRefreshData();
+      setState(() {});
+    }
+  }
+
+  _onRefreshData() async {
+    listOfTasks.clear();
+    listOfTasks = await TaskLocalApi.getAll();
+    setState(() {});
+  }
+
+  _onSearch(String text) async {
+    if (_textEditingController.text.isEmpty) {
+      listOfTasks = await TaskLocalApi.getAll();
+      setState(() {});
+      return;
+    }
+    List<TaskEntity> filterList = [];
+    for (var element in listOfTasks) {
+      if (element.title == _textEditingController.text) {
+        filterList.add(element);
+      }
+    }
+    listOfTasks.clear();
+    listOfTasks = filterList;
+    setState(() {});
+  }
+
+  _onCreateTask(String title, String description) async {
+    final epochStart = DateTime.now().millisecondsSinceEpoch;
+    final TaskEntity entity = TaskEntity(
+        id: epochStart.toString(),
+        status: TaskStatus.todo,
+        title: title,
+        date: DateTime.now(),
+        description: description);
+    final result = await TaskLocalApi.save(entity);
+    if (result) {
+      listOfTasks.add(entity);
+      setState(() {});
+    }
+  }
+
+  _onDeleteAll() async {
+    final isDeleted = await TaskLocalApi.deleteAll();
+    if (isDeleted) {
+      _onRefreshData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return KeyboardDismisser(
       child: Scaffold(
         appBar: AppBar(
           title: const Text("Tasks"),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  print("Pressed delete all elements");
+                  _onDeleteAll();
+                },
+                icon: const Icon(Icons.delete_forever)),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.only(left: 16, right: 16),
@@ -45,6 +107,12 @@ class _TodoScreenState extends State<TodoScreen> {
             children: [
               TextField(
                   controller: _textEditingController,
+                  onChanged: (String text) async {
+                    if (_textEditingController.text.isEmpty) {
+                      _onRefreshData();
+                      return;
+                    }
+                  },
                   onSubmitted: (String text) {
                     _onSearch(text);
                   },
@@ -52,7 +120,7 @@ class _TodoScreenState extends State<TodoScreen> {
                     suffixIcon: IconButton(
                       onPressed: () {
                         _textEditingController.clear();
-                        _onRefreshTask();
+                        _onRefreshData();
                       },
                       icon: const Icon(Icons.close),
                     ),
@@ -63,15 +131,15 @@ class _TodoScreenState extends State<TodoScreen> {
                 child: ListView.builder(
                   itemCount: listOfTasks.length,
                   itemBuilder: (context, index) {
-                    final localIndex = index;
-                    final element = listOfTasks[index];
+                    final entity = listOfTasks[index];
                     return Padding(
                       padding: const EdgeInsets.only(top: 15),
                       child: GestureDetector(
-                          onTap: () async {
-                            _onDeleteTask(localIndex);
+                          onTap: ()  {
+                            print("Call function onDeleteTask");
+                            _onDeleteTask(entity);
                           },
-                          child: TaskCardWidget(entity: element)),
+                          child: TaskCardWidget(entity: entity)),
                     );
                   },
                 ),
@@ -98,45 +166,5 @@ class _TodoScreenState extends State<TodoScreen> {
         ),
       ),
     );
-  }
-
-  _onDeleteTask(int index) async {
-    final result = await DialogsHelper.deleteTask(context);
-    if (result!) {
-      TaskLocalApi.delete(index);
-      _onRefreshTask();
-      setState(() {});
-    }
-  }
-
-  _onRefreshTask() async {
-    listOfTasks.clear();
-    listOfTasks = await TaskLocalApi.getAll();
-    setState(() {});
-  }
-
-  _onSearch(String text) {
-    List<TaskEntity> filterList = [];
-    for (var element in listOfTasks) {
-      if (element.title == text) {
-        filterList.add(element);
-      }
-    }
-    listOfTasks.clear();
-    listOfTasks = filterList;
-    setState(() {});
-  }
-
-  _onCreateTask(String title, String description) async {
-    final TaskEntity entity = TaskEntity(
-        status: TaskStatus.todo,
-        title: title,
-        date: DateTime.now(),
-        description: description);
-    final result = await TaskLocalApi.save(entity);
-    if (result) {
-      listOfTasks.add(entity);
-      setState(() {});
-    }
   }
 }

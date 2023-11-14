@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 
-import 'screens/todo_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   await Hive.initFlutter();
@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const TodoScreen(),
+      home: const HomeScreen(),
     );
   }
 }

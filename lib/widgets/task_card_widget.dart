@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_app/core/entity/task_entity.dart';
 
@@ -23,7 +24,10 @@ class TaskCardWidget extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Text(entity.title), Text(entity.date.toString())],
+            children: [
+              Text(entity.title),
+              Text(DateFormat('dd-MM-yyyy – kk:mm').format(entity.date))
+            ],
           ),
           const Divider(),
           Text(entity.description),

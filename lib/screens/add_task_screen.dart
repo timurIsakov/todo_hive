@@ -36,6 +36,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
+                  print("Call function 'onSave'");
                   widget.onCreate
                       .call(controllerTitle.text, controllerDescription.text);
                   Navigator.pop(

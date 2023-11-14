@@ -6,17 +6,26 @@ class TaskLocalApi {
   static Future<bool> save(TaskEntity entity) async {
     try {
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);
-      box.add(entity.toJson());
+      box.put(entity.id, entity.toJson());
+      print("Entity save!");
+      print("Box values ${box.values}");
+      print("Box keys ${box.keys}");
       return Future.value(true);
     } catch (error) {
       return Future.value(false);
     }
   }
 
-  static Future<bool> delete(int index) async {
+  static Future<bool> deleteTask(TaskEntity entity) async {
     try {
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);
-      box.deleteAt(index);
+      print("Box values before delete ${box.values}");
+      print("Box keys before delete ${box.keys}");
+
+      box.delete(entity.id);
+      print("The entity was deleted using the passed key");
+      print("Box values after delete ${box.values}");
+      print("Box keys after delete ${box.keys}");
       return Future.value(true);
     } catch (error) {
       return Future.value(false);
@@ -25,14 +34,28 @@ class TaskLocalApi {
 
   static Future<List<TaskEntity>> getAll() async {
     try {
+      print("Call function 'getAll'");
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);
       List<TaskEntity> listOfTasks = [];
       for (var json in box.values) {
         listOfTasks.add(TaskEntity.fromJson(Map.from(json)));
       }
+      print("Box values ${box.values}");
       return listOfTasks;
     } catch (error) {
       return [];
+    }
+  }
+
+  static Future<bool> deleteAll() async {
+    try {
+      final box = await Hive.openBox(HiveBoxConstants.tasksBox);
+      await box.clear();
+      print("Box deleted all elements");
+      print("Box values ${box.values}");
+      return Future.value(true);
+    } catch (error) {
+      return Future.value(false);
     }
   }
 }

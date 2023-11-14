@@ -40,7 +40,7 @@ class TaskLocalApi {
       for (var json in box.values) {
         listOfTasks.add(TaskEntity.fromJson(Map.from(json)));
       }
-      print("Box values ${box.values}");
+      print("Box has values: ${box.length}");
       return listOfTasks;
     } catch (error) {
       return [];
@@ -57,5 +57,41 @@ class TaskLocalApi {
     } catch (error) {
       return Future.value(false);
     }
+  }
+
+  static Future<List<TaskEntity>> search(String data) async {
+    try {
+      final box = await Hive.openBox(HiveBoxConstants.tasksBox);
+      List<TaskEntity> filterList = [];
+      for (var json in box.values) {
+        filterList.add(TaskEntity.fromJson(Map.from(json)));
+      }
+
+      filterList.removeWhere((element) =>
+          !element.title.contains(data) && !element.description.contains(data));
+
+      print("Result ${filterList.toString()}");
+      return filterList;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  static Future<List<TaskEntity>> getFilter(int index) async{
+    List<TaskEntity> listTasks = await getAll();
+
+
+    switch(index){
+      case 0:
+        listTasks.sort((a, b) => a.date.compareTo(b.date),);
+        return listTasks;
+        default:
+          return [];
+    }
+
+
+
+
+
   }
 }

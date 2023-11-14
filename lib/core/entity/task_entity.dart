@@ -34,4 +34,9 @@ class TaskEntity {
 
     return data;
   }
+
+  @override
+  String toString() {
+    return "id: $id, title: $title, description: $description";
+  }
 }

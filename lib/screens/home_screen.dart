@@ -17,6 +17,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _textEditingController = TextEditingController();
 
+  String dropdownValue = 'All';
+  List<String> list = <String>[
+    'New tasks',
+    'Old tasks',
+    'All',
+  ];
+
   List<TaskEntity> listOfTasks = [];
 
   @override
@@ -48,23 +55,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _onSearch(String text) async {
-    if (_textEditingController.text.isEmpty) {
-      listOfTasks = await TaskLocalApi.getAll();
-      setState(() {});
-      return;
-    }
-    List<TaskEntity> filterList = [];
-    for (var element in listOfTasks) {
-      if (element.title == _textEditingController.text) {
-        filterList.add(element);
-      }
-    }
     listOfTasks.clear();
-    listOfTasks = filterList;
+    listOfTasks = await TaskLocalApi.search(text);
     setState(() {});
   }
 
-  _onCreateTask(String title, String description) async {
+  _onCreateTask(
+    String title,
+    String description,
+  ) async {
     final epochStart = DateTime.now().millisecondsSinceEpoch;
     final TaskEntity entity = TaskEntity(
         id: epochStart.toString(),
@@ -80,10 +79,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   _onDeleteAll() async {
-    final isDeleted = await TaskLocalApi.deleteAll();
-    if (isDeleted) {
+    final result = await DialogsHelper.deleteAll(context);
+    if (result!) {
+      await TaskLocalApi.deleteAll();
+
       _onRefreshData();
     }
+  }
+
+  _onFilterTasks(int indexOfSelect) async {
+    listOfTasks.clear();
+    listOfTasks = await TaskLocalApi.getFilter(indexOfSelect);
+    setState(() {});
   }
 
   @override
@@ -114,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                   onSubmitted: (String text) {
+                    print("Call function 'onSearch'");
                     _onSearch(text);
                   },
                   decoration: InputDecoration(
@@ -126,7 +134,39 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     labelText: "Search",
                   )),
-              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Text("Filter", style: TextStyle(fontSize: 17)),
+                  const Icon(
+                    Icons.filter_alt_outlined,
+                    size: 17,
+                  ),
+                  const Spacer(),
+                  DropdownButton<String>(
+                    value: dropdownValue,
+                    icon: const Icon(Icons.arrow_drop_down),
+                    elevation: 20,
+                    style: const TextStyle(color: Colors.deepPurple),
+                    underline: Container(
+                      height: 2,
+                      color: Colors.deepPurpleAccent,
+                    ),
+                    onChanged: (String? value) {
+                      setState(() {
+                        dropdownValue = value!;
+                      });
+                      _onFilterTasks(list.indexOf(value!));
+                    },
+                    items: list.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
               Expanded(
                 child: ListView.builder(
                   itemCount: listOfTasks.length,
@@ -135,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 15),
                       child: GestureDetector(
-                          onTap: ()  {
+                          onTap: () {
                             print("Call function onDeleteTask");
                             _onDeleteTask(entity);
                           },

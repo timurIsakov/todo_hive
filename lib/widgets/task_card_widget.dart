@@ -26,7 +26,7 @@ class TaskCardWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(entity.title),
-              Text(DateFormat('dd-MM-yyyy – kk:mm').format(entity.date))
+              Text(DateFormat('dd-MM-yyyy | kk:mm').format(entity.date))
             ],
           ),
           const Divider(),

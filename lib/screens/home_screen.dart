@@ -1,6 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
+import 'package:lottie/lottie.dart';
 import 'package:todo_app/core/local_api/task_local_api.dart';
+import 'package:todo_app/core/utils/assets.dart';
 import 'package:todo_app/core/utils/dialogs_helper.dart';
 import 'package:todo_app/screens/add_task_screen.dart';
 import 'package:todo_app/widgets/task_card_widget.dart';
@@ -16,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _textEditingController = TextEditingController();
-
+  bool isFilter = false;
   String dropdownValue = 'All';
   List<String> list = <String>[
     'New tasks',
@@ -30,6 +33,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     initialization();
     super.initState();
+  }
+
+  _isFilterList(String value) {
+    if (list.indexOf(value) == 0 || list.indexOf(value) == 1) {
+      setState(() {
+        isFilter = true;
+      });
+    }else{
+      setState(() {
+        isFilter = false;
+      });
+    }
   }
 
   initialization() async {
@@ -136,10 +151,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   )),
               Row(
                 children: [
-                  const Text("Filter", style: TextStyle(fontSize: 17)),
-                  const Icon(
-                    Icons.filter_alt_outlined,
-                    size: 17,
+                  Container(
+                    color: isFilter ? Colors.green : null,
+                    child: const Row(
+                      children: [
+                        Text("Filter", style: TextStyle(fontSize: 17)),
+                        Icon(
+                          Icons.filter_alt_outlined,
+                          size: 17,
+                        ),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   DropdownButton<String>(
@@ -152,10 +174,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.deepPurpleAccent,
                     ),
                     onChanged: (String? value) {
+                      _isFilterList(value!);
                       setState(() {
-                        dropdownValue = value!;
+                        dropdownValue = value;
                       });
-                      _onFilterTasks(list.indexOf(value!));
+                      _onFilterTasks(list.indexOf(value));
                     },
                     items: list.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
@@ -167,23 +190,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 5),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: listOfTasks.length,
-                  itemBuilder: (context, index) {
-                    final entity = listOfTasks[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 15),
-                      child: GestureDetector(
-                          onTap: () {
-                            print("Call function onDeleteTask");
-                            _onDeleteTask(entity);
-                          },
-                          child: TaskCardWidget(entity: entity)),
-                    );
-                  },
-                ),
-              )
+              listOfTasks.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 100),
+                      child: SizedBox(
+                          height: 350,
+                          width: 400,
+                          child: Lottie.asset(
+                            Assets.tAnimateEmpty,
+                            fit: BoxFit.cover,
+                          )),
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: listOfTasks.length,
+                        itemBuilder: (context, index) {
+                          final entity = listOfTasks[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 15),
+                            child: GestureDetector(
+                                onTap: () {
+                                  print("Call function onDeleteTask");
+                                  _onDeleteTask(entity);
+                                },
+                                child: TaskCardWidget(entity: entity)),
+                          );
+                        },
+                      ),
+                    )
             ],
           ),
         ),

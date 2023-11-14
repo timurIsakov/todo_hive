@@ -77,21 +77,23 @@ class TaskLocalApi {
     }
   }
 
-  static Future<List<TaskEntity>> getFilter(int index) async{
+  static Future<List<TaskEntity>> getFilter(int index) async {
     List<TaskEntity> listTasks = await getAll();
 
-
-    switch(index){
+    switch (index) {
       case 0:
-        listTasks.sort((a, b) => a.date.compareTo(b.date),);
+        listTasks.sort(
+          (a, b) => a.date.compareTo(b.date),
+        );
         return listTasks;
-        default:
-          return [];
+      case 1:
+        listTasks.sort(
+          (a, b) => b.date.compareTo(a.date),
+        );
+      case 2:
+        return listTasks;
     }
 
-
-
-
-
+    return [];
   }
 }

@@ -83,13 +83,14 @@ class TaskLocalApi {
     switch (index) {
       case 0:
         listTasks.sort(
-          (a, b) => a.date.compareTo(b.date),
+          (a, b) => b.date.compareTo(a.date),
         );
         return listTasks;
       case 1:
         listTasks.sort(
-          (a, b) => b.date.compareTo(a.date),
+          (a, b) => a.date.compareTo(b.date),
         );
+        return listTasks;
       case 2:
         return listTasks;
     }

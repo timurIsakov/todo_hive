@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:todo_app/core/utils/date_time_helper.dart';
 
 class DateTimePickerWidget extends StatefulWidget {
+  final Function(DateTime data) function;
   const DateTimePickerWidget({
     Key? key,
+    required this.function,
   }) : super(key: key);
 
   @override
@@ -20,6 +22,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
       setState(() {
         currentDateTime = date;
       });
+      widget.function.call(currentDateTime);
     }
   }
 

@@ -78,13 +78,14 @@ class _HomeScreenState extends State<HomeScreen> {
   _onCreateTask(
     String title,
     String description,
+      DateTime dateTime
   ) async {
     final epochStart = DateTime.now().millisecondsSinceEpoch;
     final TaskEntity entity = TaskEntity(
         id: epochStart.toString(),
         status: TaskStatus.todo,
         title: title,
-        date: DateTime.now(),
+        date: dateTime,
         description: description);
     final result = await TaskLocalApi.save(entity);
     if (result) {

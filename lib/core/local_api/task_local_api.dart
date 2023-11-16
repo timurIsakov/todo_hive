@@ -6,7 +6,7 @@ class TaskLocalApi {
   static Future<bool> save(TaskEntity entity) async {
     try {
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);
-      box.put(entity.id, entity.toJson());
+      box.put(entity.id, entity);
       print("Entity save!");
       print("Box values ${box.values}");
       print("Box keys ${box.keys}");
@@ -37,9 +37,8 @@ class TaskLocalApi {
       print("Call function 'getAll'");
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);
       List<TaskEntity> listOfTasks = [];
-      for (var json in box.values) {
-        listOfTasks.add(TaskEntity.fromJson(Map.from(json)));
-      }
+
+        listOfTasks = List<TaskEntity>.from(box.values);
       print("Box has values: ${box.length}");
       return listOfTasks;
     } catch (error) {
@@ -63,9 +62,7 @@ class TaskLocalApi {
     try {
       final box = await Hive.openBox(HiveBoxConstants.tasksBox);
       List<TaskEntity> filterList = [];
-      for (var json in box.values) {
-        filterList.add(TaskEntity.fromJson(Map.from(json)));
-      }
+      filterList = List<TaskEntity>.from(box.values);
 
       filterList.removeWhere((element) =>
           !element.title.contains(data) && !element.description.contains(data));

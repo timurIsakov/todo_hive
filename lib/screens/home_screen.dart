@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'package:lottie/lottie.dart';
@@ -40,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         isFilter = true;
       });
-    }else{
+    } else {
       setState(() {
         isFilter = false;
       });
@@ -75,11 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
   }
 
-  _onCreateTask(
-    String title,
-    String description,
-      DateTime dateTime
-  ) async {
+  _onCreateTask(String title, String description, DateTime dateTime) async {
     final epochStart = DateTime.now().millisecondsSinceEpoch;
     final TaskEntity entity = TaskEntity(
         id: epochStart.toString(),

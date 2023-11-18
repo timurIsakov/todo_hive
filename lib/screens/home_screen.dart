@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'package:lottie/lottie.dart';
 import 'package:todo_app/core/local_api/task_local_api.dart';
 import 'package:todo_app/core/utils/assets.dart';
 import 'package:todo_app/core/utils/dialogs_helper.dart';
-import 'package:todo_app/core/utils/hive_box_constants.dart';
 import 'package:todo_app/screens/add_task_screen.dart';
 import 'package:todo_app/widgets/task_card_widget.dart';
 
@@ -49,10 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   initialization() async {
-     listOfTasks = await TaskLocalApi.getAll();
-
-
-
+    listOfTasks = await TaskLocalApi.getAll();
   }
 
   _onDeleteTask(TaskEntity entity) async {
@@ -60,24 +55,21 @@ class _HomeScreenState extends State<HomeScreen> {
     if (result!) {
       await TaskLocalApi.deleteTask(entity);
       _onRefreshData();
-
     }
   }
 
   _onRefreshData() async {
     listOfTasks.clear();
-     listOfTasks = await TaskLocalApi.getAll();
+    listOfTasks = await TaskLocalApi.getAll();
+    setState(() {
 
-
+    });
   }
 
   _onSearch(String text) async {
     listOfTasks.clear();
-      listOfTasks = await TaskLocalApi.search(text);
-      setState(() {
-
-      });
-
+    listOfTasks = await TaskLocalApi.search(text);
+    setState(() {});
   }
 
   _onCreateTask(String title, String description, DateTime dateTime) async {
@@ -88,9 +80,8 @@ class _HomeScreenState extends State<HomeScreen> {
         title: title,
         date: dateTime,
         description: description);
-     await TaskLocalApi.save(entity);
-     _onRefreshData();
-
+    await TaskLocalApi.save(entity);
+    _onRefreshData();
   }
 
   _onDeleteAll() async {
@@ -202,24 +193,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           )),
                     )
                   : Expanded(
-                      child: ValueListenableBuilder<Box<TaskEntity>>(
-                        valueListenable: Hive.box<TaskEntity>(HiveBoxConstants.tasksBox).listenable(),
-                        builder: (context,box,widget) {
-                          //listOfTasks = box.values.toList();
-                          return ListView.builder(
-                            itemCount: listOfTasks.length,
-                            itemBuilder: (context, index) {
-                              final entity = listOfTasks[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 15),
-                                child: GestureDetector(
-                                    onTap: () {
-                                      print("Call function onDeleteTask");
-                                      _onDeleteTask(entity);
-                                    },
-                                    child: TaskCardWidget(entity: entity)),
-                              );
-                            },
+                      child: ListView.builder(
+                        itemCount: listOfTasks.length,
+                        itemBuilder: (context, index) {
+                          final entity = listOfTasks[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 15),
+                            child: GestureDetector(
+                                onTap: () {
+                                  print("Call function onDeleteTask");
+                                  _onDeleteTask(entity);
+                                },
+                                child: TaskCardWidget(entity: entity)),
                           );
                         },
                       ),

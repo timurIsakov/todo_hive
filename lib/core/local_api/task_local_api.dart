@@ -38,7 +38,7 @@ class TaskLocalApi {
       final box = await Hive.openBox<TaskEntity>(HiveBoxConstants.tasksBox);
       List<TaskEntity> listOfTasks = [];
 
-        listOfTasks = box.values.toList();
+      listOfTasks = box.values.toList();
       print("Box has values: ${box.length}");
       return listOfTasks;
     } catch (error) {
@@ -59,16 +59,14 @@ class TaskLocalApi {
   }
 
   static Future<List<TaskEntity>> search(String data) async {
+    final box = await Hive.openBox<TaskEntity>(HiveBoxConstants.tasksBox);
+    List<TaskEntity> filterList = [];
+    filterList = box.values.toList();
+    filterList.removeWhere((element) =>
+        !element.title.contains(data) && !element.description.contains(data));
 
-      final box = await Hive.openBox<TaskEntity>(HiveBoxConstants.tasksBox);
-      List<TaskEntity> filterList = [];
-      filterList = box.values.toList();
-      filterList.removeWhere((element) =>
-          !element.title.contains(data) && !element.description.contains(data));
-
-      print("Result ${filterList.toString()}");
-      return filterList;
-
+    print("Result ${filterList.toString()}");
+    return filterList;
   }
 
   static Future<List<TaskEntity>> getFilter(int index) async {
@@ -90,5 +88,18 @@ class TaskLocalApi {
     }
 
     return [];
+  }
+
+  static Future<void> saveTheme(bool value) async {
+    final box = await Hive.openBox(HiveBoxConstants.themeBox);
+    box.put("isDark", value);
+    print("isDark ${box.values}");
+  }
+
+  static Future<bool> getTheme() async {
+    final box = await Hive.openBox(HiveBoxConstants.themeBox);
+    bool value = await box.get("isDark");
+    print("isDark: ${box.values}");
+    return value;
   }
 }

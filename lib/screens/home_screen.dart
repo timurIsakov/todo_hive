@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'package:lottie/lottie.dart';
-import 'package:todo_app/core/local_api/task_local_api.dart';
+import 'package:provider/provider.dart';
 import 'package:todo_app/core/utils/assets.dart';
-import 'package:todo_app/core/utils/dialogs_helper.dart';
+import 'package:todo_app/provider/list_provider.dart';
+import 'package:todo_app/provider/theme_provider.dart';
 import 'package:todo_app/screens/add_task_screen.dart';
 import 'package:todo_app/widgets/task_card_widget.dart';
-
-import '../core/entity/task_entity.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -18,15 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _textEditingController = TextEditingController();
-  bool isFilter = false;
-  String dropdownValue = 'All';
-  List<String> list = <String>[
-    'New tasks',
-    'Old tasks',
-    'All',
-  ];
-
-  List<TaskEntity> listOfTasks = [];
 
   @override
   void initState() {
@@ -34,69 +24,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
-  _isFilterList(String value) {
-    if (list.indexOf(value) == 0 || list.indexOf(value) == 1) {
-      setState(() {
-        isFilter = true;
-      });
-    } else {
-      setState(() {
-        isFilter = false;
-      });
-    }
-  }
-
-  initialization() async {
-    listOfTasks = await TaskLocalApi.getAll();
-  }
-
-  _onDeleteTask(TaskEntity entity) async {
-    final result = await DialogsHelper.deleteTask(context);
-    if (result!) {
-      await TaskLocalApi.deleteTask(entity);
-      _onRefreshData();
-    }
-  }
-
-  _onRefreshData() async {
-    listOfTasks.clear();
-    listOfTasks = await TaskLocalApi.getAll();
-    setState(() {
-
-    });
-  }
-
-  _onSearch(String text) async {
-    listOfTasks.clear();
-    listOfTasks = await TaskLocalApi.search(text);
-    setState(() {});
-  }
-
-  _onCreateTask(String title, String description, DateTime dateTime) async {
-    final epochStart = DateTime.now().millisecondsSinceEpoch;
-    final TaskEntity entity = TaskEntity(
-        id: epochStart.toString(),
-        status: TaskStatus.todo,
-        title: title,
-        date: dateTime,
-        description: description);
-    await TaskLocalApi.save(entity);
-    _onRefreshData();
-  }
-
-  _onDeleteAll() async {
-    final result = await DialogsHelper.deleteAll(context);
-    if (result!) {
-      await TaskLocalApi.deleteAll();
-
-      _onRefreshData();
-    }
-  }
-
-  _onFilterTasks(int indexOfSelect) async {
-    listOfTasks.clear();
-    listOfTasks = await TaskLocalApi.getFilter(indexOfSelect);
-    setState(() {});
+  initialization() {
+    context.read<ListProvider>().initialization();
+    context.read<ThemeProvider>().getTheme();
   }
 
   @override
@@ -104,113 +34,128 @@ class _HomeScreenState extends State<HomeScreen> {
     return KeyboardDismisser(
       child: Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            onPressed: () {
+              context.read<ThemeProvider>().changeTheme();
+            },
+            icon: context.watch<ThemeProvider>().isDark
+                ? const Icon(Icons.light_mode)
+                : const Icon(Icons.dark_mode),
+          ),
           title: const Text("Tasks"),
           actions: [
             IconButton(
                 onPressed: () {
                   print("Pressed delete all elements");
-                  _onDeleteAll();
+                  context.read<ListProvider>().onDeleteAll(context);
+                  // _onDeleteAll();
                 },
                 icon: const Icon(Icons.delete_forever)),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16),
-          child: Column(
-            children: [
-              TextField(
-                  controller: _textEditingController,
-                  onChanged: (String text) async {
-                    if (_textEditingController.text.isEmpty) {
-                      _onRefreshData();
-                      return;
-                    }
-                  },
-                  onSubmitted: (String text) {
-                    print("Call function 'onSearch'");
-                    _onSearch(text);
-                  },
-                  decoration: InputDecoration(
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        _textEditingController.clear();
-                        _onRefreshData();
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-                    labelText: "Search",
-                  )),
-              Row(
+        body: Consumer<ListProvider>(
+          builder: (context, data, child) {
+            return Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16),
+              child: Column(
                 children: [
-                  Container(
-                    color: isFilter ? Colors.green : null,
-                    child: const Row(
-                      children: [
-                        Text("Filter", style: TextStyle(fontSize: 17)),
-                        Icon(
-                          Icons.filter_alt_outlined,
-                          size: 17,
+                  TextField(
+                      controller: _textEditingController,
+                      onChanged: (String text) async {
+                        if (_textEditingController.text.isEmpty) {
+                          context.read<ListProvider>().onRefreshData();
+                          return;
+                        }
+                      },
+                      onSubmitted: (String text) {
+                        print("Call function 'onSearch'");
+                        context.read<ListProvider>().onSearch(text);
+                      },
+                      decoration: InputDecoration(
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            _textEditingController.clear();
+                            context.read<ListProvider>().onRefreshData();
+                          },
+                          icon: const Icon(Icons.close),
                         ),
-                      ],
-                    ),
+                        labelText: "Search",
+                      )),
+                  Row(
+                    children: [
+                      Container(
+                        color: data.isFilter ? Colors.green : null,
+                        child: const Row(
+                          children: [
+                            Text("Filter", style: TextStyle(fontSize: 17)),
+                            Icon(
+                              Icons.filter_alt_outlined,
+                              size: 17,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      DropdownButton<String>(
+                        value: data.dropdownValue,
+                        icon: const Icon(Icons.arrow_drop_down),
+                        elevation: 20,
+                        style: const TextStyle(color: Colors.deepPurple),
+                        underline: Container(
+                          height: 2,
+                          color: Colors.deepPurpleAccent,
+                        ),
+                        onChanged: (String? value) {
+                          context.read<ListProvider>().isFilterList(value!);
+                          context
+                              .read<ListProvider>()
+                              .onFilterTasks(data.list.indexOf(value));
+                        },
+                        items: data.list
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  DropdownButton<String>(
-                    value: dropdownValue,
-                    icon: const Icon(Icons.arrow_drop_down),
-                    elevation: 20,
-                    style: const TextStyle(color: Colors.deepPurple),
-                    underline: Container(
-                      height: 2,
-                      color: Colors.deepPurpleAccent,
-                    ),
-                    onChanged: (String? value) {
-                      _isFilterList(value!);
-                      setState(() {
-                        dropdownValue = value;
-                      });
-                      _onFilterTasks(list.indexOf(value));
-                    },
-                    items: list.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                  ),
+                  const SizedBox(height: 5),
+                  data.listOfTasks.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 100),
+                          child: SizedBox(
+                              height: 350,
+                              width: 400,
+                              child: Lottie.asset(
+                                Assets.tAnimateEmpty,
+                                fit: BoxFit.cover,
+                              )),
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: data.listOfTasks.length,
+                            itemBuilder: (context, index) {
+                              final entity = data.listOfTasks[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 15),
+                                child: GestureDetector(
+                                    onTap: () {
+                                      print("Call function onDeleteTask");
+                                      context
+                                          .read<ListProvider>()
+                                          .onDeleteTask(entity, context);
+                                    },
+                                    child: TaskCardWidget(entity: entity)),
+                              );
+                            },
+                          ),
+                        )
                 ],
               ),
-              const SizedBox(height: 5),
-              listOfTasks.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 100),
-                      child: SizedBox(
-                          height: 350,
-                          width: 400,
-                          child: Lottie.asset(
-                            Assets.tAnimateEmpty,
-                            fit: BoxFit.cover,
-                          )),
-                    )
-                  : Expanded(
-                      child: ListView.builder(
-                        itemCount: listOfTasks.length,
-                        itemBuilder: (context, index) {
-                          final entity = listOfTasks[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 15),
-                            child: GestureDetector(
-                                onTap: () {
-                                  print("Call function onDeleteTask");
-                                  _onDeleteTask(entity);
-                                },
-                                child: TaskCardWidget(entity: entity)),
-                          );
-                        },
-                      ),
-                    )
-            ],
-          ),
+            );
+          },
         ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.deepPurple,
@@ -218,9 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AddTaskScreen(
-                  onCreate: _onCreateTask,
-                ),
+                builder: (context) => const AddTaskScreen(),
               ),
             );
           },

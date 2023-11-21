@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/provider/list_provider.dart';
 
 import '../widgets/date_time_picker_widget.dart';
 
 class AddTaskScreen extends StatefulWidget {
-  final Function(String title, String description, DateTime dateTime) onCreate;
-  const AddTaskScreen({Key? key, required this.onCreate}) : super(key: key);
+  //final Function(String title, String description, DateTime dateTime) onCreate;
+  const AddTaskScreen({
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
@@ -54,7 +58,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         floatingActionButton: FloatingActionButton(
           onPressed: () {
             print("Call function 'onSave'");
-            widget.onCreate.call(controllerTitle.text,
+            context.read<ListProvider>().onCreateTask(controllerTitle.text,
                 controllerDescription.text, selectedDateTime ?? DateTime.now());
             Navigator.pop(
               context,
